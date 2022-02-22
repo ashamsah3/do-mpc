@@ -1,5 +1,6 @@
 import dubins
 import numpy as np
+import scipy.stats
 import matplotlib.pyplot as plt
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
@@ -44,8 +45,8 @@ prediction_history = delta_xs*0
 std_history = delta_xs*0
 last =len(xs)-1
 
-mem =6
-stop=10
+mem =3
+stop=8
 
 for i in range(1, size-stop, 1):
 
@@ -145,7 +146,6 @@ pred_y=ys[c-1]+ pred_vy
 
 ax1.scatter(xs[i-1], ys[c-1], c="orange", label="last obs")
 ax1.scatter(pred_x, pred_y, c="red", label="mean prediction")
-ax1.legend()	
 
 ax2.plot(X[i-mem:last], mean_prediction[i-mem:last], label="Mean prediction")
 
@@ -177,15 +177,48 @@ ax3.scatter(pred_t, pred_vy, label="pred")
 ax3.legend()
 
 
+sum_til = 3
+sum_deltax=sum(mean_prediction[i:i+sum_til])
+sum_deltax_up = sum((mean_prediction[i:i+sum_til] + 1.96*std_prediction[i:i+sum_til].reshape(-1,1)).ravel())
+sum_deltax_dw = sum((mean_prediction[i:i+sum_til] - 1.96*std_prediction[i:i+sum_til].reshape(-1,1)).ravel())
 
-sum_deltax=sum(mean_prediction[i:i+3])
-sum_deltay=sum(mean_prediction_y[i:i+3])
+sum_deltay=sum(mean_prediction_y[i:i+sum_til])
+sum_deltay_up = sum((mean_prediction_y[i:i+sum_til] + 1.96*std_prediction_y[i:i+sum_til].reshape(-1,1)).ravel())
+sum_deltay_dw = sum((mean_prediction_y[i:i+sum_til] - 1.96*std_prediction_y[i:i+sum_til].reshape(-1,1)).ravel())
+
+xworst_u=[]
+yworst_u=[]
+xworst_d=[]
+yworst_d=[]
+
+conf=0.5
+for b in range(i,i+sum_til+1,1):
+	xworst_u.append(sum((mean_prediction[i:b] + conf*std_prediction[i:b].reshape(-1,1)).ravel()))
+	yworst_u.append(sum((mean_prediction_y[i:b] + conf*std_prediction_y[i:b].reshape(-1,1)).ravel()))
+	xworst_d.append(sum((mean_prediction[i:b] - conf*std_prediction[i:b].reshape(-1,1)).ravel()))
+	yworst_d.append(sum((mean_prediction_y[i:b] - conf*std_prediction_y[i:b].reshape(-1,1)).ravel()))
+	
+
+ax1.plot(xs[i-1]+xworst_u,ys[c-1]+yworst_u, c="black")
+ax1.plot(xs[i-1]+xworst_u,ys[c-1]+yworst_d, c="black")
+ax1.plot(xs[i-1]+xworst_d,ys[c-1]+yworst_u, c="black")
+ax1.plot(xs[i-1]+xworst_d,ys[c-1]+yworst_d, c="black")
+
+
 
 ax1.scatter(xs[i-1]+ sum_deltax, ys[c-1]+sum_deltay, c="black", label="obs")
+#ax1.scatter(xs[i-1]+ sum_deltax_up, ys[c-1]+sum_deltay_up, label="++2std")
+#ax1.scatter(xs[i-1]+ sum_deltax_up, ys[c-1]+sum_deltay_dw, label="+-2std")
+#ax1.scatter(xs[i-1]+ sum_deltax_dw, ys[c-1]+sum_deltay_up, label="-+2std")
+#ax1.scatter(xs[i-1]+ sum_deltax_dw, ys[c-1]+sum_deltay_dw, label="--2std")
 
+ellipse2 = Ellipse(xy=(0, 0), width=2*sum((conf*std_prediction[i:b].reshape(-1,1)).ravel()),
+					    height=2*sum((conf*std_prediction_y[i:b].reshape(-1,1)).ravel()), 
+                        edgecolor='black', fc='None', lw=2)
+ax1.add_patch(ellipse2)
 
-
-
+print(sum((conf*std_prediction[i:b].reshape(-1,1)).ravel()))
+print(sum((conf*std_prediction_y[i:b].reshape(-1,1)).ravel()))
 
 meanx, stdx = gaussian_process.predict((pred_t).reshape(-1,1), return_std=True)
 meany, stdy = gaussian_processy.predict((pred_t).reshape(-1,1), return_std=True)
@@ -199,23 +232,33 @@ ax1.axis('equal')
 #ax1.add_artist(circle2)
 ellipse1 = Ellipse(xy=(pred_x, pred_y), width=2*stdx*1.96, height=2*stdy*1.96, 
                         edgecolor='r', fc='None', lw=2)
-ax1.add_patch(ellipse1)
+#ax1.add_patch(ellipse1)
 
-ellipse2 = Ellipse(xy=(xs[i-1]+ sum_deltax, ys[c-1]+sum_deltay), width=2*std_prediction[i+3]*1.96, height=2*std_prediction_y[i+3]*1.96, 
-                        edgecolor='black', fc='None', lw=2)
-ax1.add_patch(ellipse2)
+
 
 midpoint_x = (sum_deltax)/2 #+ xs[i-1]
 midpoint_y = (sum_deltay)/2 #+ ys[i-1]
 
-a = (midpoint_x - (sum_deltax)) + std_prediction[i+3]*1.96
-b = (midpoint_y - (sum_deltay)) + std_prediction_y[i+3]*1.96
+a = (midpoint_x - (sum_deltax)) + std_prediction[i+sum_til]*1.96
+b = (midpoint_y - (sum_deltay)) + std_prediction_y[i+sum_til]*1.96
 
-ax1.scatter(midpoint_x+ xs[i-1], midpoint_y + ys[i-1], c="y", label="C")
+#ax1.scatter(midpoint_x+ xs[i-1], midpoint_y + ys[i-1], c="y", label="C")
 
 ellipse3 = Ellipse(xy=(midpoint_x+ xs[i-1], midpoint_y + ys[i-1]), width=2*a, height=2*b, 
                         edgecolor='y', fc='None', lw=2)
-ax1.add_patch(ellipse3)
+#ax1.add_patch(ellipse3)
+
+
+'''
+print(meanx)
+print(stdx)
+Z = ((meanx+0.1)-meanx)/stdx 
+print(Z)
+p = scipy.stats.norm.sf(abs(Z))
+print(p)
+'''
+
+
 '''
 std_x1= xs[i]+ n_horz*dt*(pred_vx+(1.96*stdx))
 std_x2= xs[i]+ n_horz*dt*(pred_vx-(1.96*stdx))
@@ -231,7 +274,7 @@ ellipse = Ellipse(xy=(pred_x, pred_y), width=std_x/2, height=std_y/2,
                         edgecolor='r', fc='None', lw=2)
 ax1.add_patch(ellipse)
 '''
-
+ax1.legend()	
 plt.show()
 
 

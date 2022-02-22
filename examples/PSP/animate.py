@@ -16,10 +16,11 @@ from template_simulator import template_simulator
 
 from matplotlib.animation import FuncAnimation, FFMpegWriter, ImageMagickWriter
 from matplotlib.patches import Circle
+from matplotlib.patches import Ellipse
 from do_mpc.data import save_results, load_results
 
 #results = load_results('./results/007_PSP_turn.pkl')
-results = load_results('./results/stuck.pkl')
+results = load_results('./results/005_stuck.pkl')
 
 x = results['mpc']['_x','x',0]
 y = results['mpc']['_x','x',2]
@@ -39,7 +40,6 @@ fig.set_size_inches(7, 6.5)
 
 ax = plt.axes(xlim=(-1, 10), ylim=(4, 12))
 patch = plt.Circle((5, 8.5), 1, fc='y')
-
 ax.plot(x,y)
 
 patch2= plt.Circle((x[0],y[0]), 0.1)
@@ -52,16 +52,39 @@ goal = Circle((9, 5), 0.1, color="red", alpha=0.5)
 #circle2 = Circle((1.8, 9.25), 0.5, alpha=0.5)
 #goal = Circle((1.5, 8.5), 0.1, color="red", alpha=0.5)
 ax.add_artist(circle1)
-ax.add_artist(circle2)
+#ax.add_artist(circle2)
 ax.add_artist(goal)
 
+patchp = Ellipse(xy=(8, 9), width=2*0.7*1.2,
+                        height=2*1.3*0.7, 
+                        edgecolor='y', fc='None', lw=2)
+
+#ax.add_patch(patchp)
+
+patch = plt.Circle((8, 9), 0.7, fc='y', alpha=0.9)
+
+def init():
+    ax.add_patch(patchp)
+    return patchp, patch
+
 def animate(i): 
+    
+
+
     x_obs = 8 + 0*dyn[i]
     y_obs = dyn[i]
-    patch = plt.Circle((x_obs, y_obs), 0.7, fc='y', alpha=0.2)
+    #patch = plt.Circle((x_obs, y_obs), 0.7, fc='y', alpha=0.9)
+    patch.set_center((x_obs, y_obs))
     x_obsp = 8 + 0*dyn[i]
-    y_obsp = dyn[i]-0.1
-    patchp = plt.Circle((x_obsp, y_obsp), 0.7, fc='red', alpha=0.15)
+    y_obsp = dyn[i]-0.2
+    #patchp = plt.Circle((x_obsp, y_obsp), 0.7, fc='red', alpha=0.15)
+    '''
+    patchp = Ellipse(xy=(x_obsp, y_obsp), width=2*0.7*1.1,
+                        height=2*1.8*0.7, 
+                        edgecolor='black', fc='None', lw=2)
+    '''
+    #ax1.add_patch(ellipse2)
+    patchp.set_center((x_obsp, y_obsp))
     x_s = x[i]
     y_s = y[i]
     patch2= plt.Circle((x_s,y_s), 0.1)
@@ -71,56 +94,18 @@ def animate(i):
     ax.add_artist(patch)
     ax.add_artist(patch2)
     ax.add_artist(patch3)
-    #ax.add_artist(patchp)
+    ax.add_patch(patchp)
+    
+    return patchp, patch,
+    
+    
+   
     
 
 
 
 
-anim = FuncAnimation(fig, animate, interval=500)
-'''
-def init():
-    patch.center = (5, 8.5)
-    ax.add_patch(patch)
-    return patch,
-
-
-
-def animate(i):
-    x_obs, y_obs = patch.center
-    x_obs = 5 + 0*dyn[i]
-    y_obs = dyn[i]
-    patch.center = (x_obs, y_obs)
-    return patch,
-
-
-def init1():
-    patch2.center = ((x[0],y[0]))
-    ax.add_patch(patch2)
-    return patch2,
-
-
-
-def animate1(c):
-    x_s, y_s = patch2.center
-    x_s = x[c]
-    y_s = y[c]
-    patch2.center = (x_s, y_s)
-    return patch2,
-
-
-anim1 = animation.FuncAnimation(fig, animate1, 
-                               init_func=init1,                            
-                               interval=100,
-                               blit=True)
-
-
-anim = animation.FuncAnimation(fig, animate, 
-                               init_func=init,                             
-                               interval=100,
-                               blit=True)
-
-'''
+anim = FuncAnimation(fig, animate, init_func=init, interval=250)
 
 
 

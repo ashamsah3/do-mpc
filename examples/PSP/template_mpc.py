@@ -47,8 +47,8 @@ def template_mpc(model):
 
     mpc.set_param(**setup_mpc)
 
-    xg=10
-    yg=0
+    xg=9
+    yg=5
     xdg=0
     ydg=0
 
@@ -63,18 +63,18 @@ def template_mpc(model):
     max_x = np.array([[100.0], [1], [100.0], [1]])
     min_x = np.array([[-10.0], [-0.2], [-10.0], [-1]])
     max_u = np.array([[0.3], [0.3]])
-    min_u = np.array([[-0.2], [-0.3]])
+    min_u = np.array([[-0.3], [-0.3]])
 
     mpc.bounds['lower','_x','x'] =  min_x
     mpc.bounds['upper','_x','x'] =  max_x
 
-    #mpc.bounds['lower','_u','u'] =  min_u
-    #mpc.bounds['upper','_u','u'] =  max_u
+   # mpc.bounds['lower','_u','u'] =  min_u
+   # mpc.bounds['upper','_u','u'] =  max_u
 
     #mean, std = pred(obs[i:i-4],T[i:i-4],3*time_step)
     #a, b = Ellipse_axes(mean, std, last_obs, 3*time_step (MAYBE))
     #distance = calc_dist(curr_robot(x,y), a, b)
-    
+
 
 
     tvp_template = mpc.get_tvp_template()
@@ -86,7 +86,7 @@ def template_mpc(model):
     def tvp_fun(t_ind):
         ind = t_ind // setup_mpc['t_step']
         
-        tvp_template['_tvp',:, 'dyn_obs'] = 10 - ind*0.2
+        tvp_template['_tvp',:, 'dyn_obs'] = 10.5 - ind*0.2
 
         tvp_template['_tvp',:, 'stance'] = (-1)**(ind)
 
@@ -117,16 +117,20 @@ def template_mpc(model):
 
     omega=sqrt(9.81/0.8)
     
-    mpc.set_nl_cons('obstacles', -model.aux['obstacle_distance'], 0)
-    mpc.set_nl_cons('dyn_obstacles', -model.aux['dyn_obstacle_distance'], 0)
-    #mpc.set_nl_cons('grizzle1', -model.aux['grizzle1'], 0)
-    #mpc.set_nl_cons('grizzle2', -model.aux['grizzle2'], 0)
+    mpc.set_nl_cons('obstacles', model.aux['obstacle_distance'], 0)
+    #mpc.set_nl_cons('obstacles', (1-0.5)*model.aux['hk1']- model.aux['hk1_n'],0)
+    #mpc.set_nl_cons('dyn_obstacles', model.aux['dyn_obstacle_distance'], 0)
+    mpc.set_nl_cons('grizzle1', model.aux['grizzle1'], 0)
+    mpc.set_nl_cons('grizzle2', model.aux['grizzle2'], 0)
+    mpc.set_nl_cons('grizzle11', model.aux['grizzle11'], 0)
+    mpc.set_nl_cons('grizzle22', model.aux['grizzle22'], 0)
     #mpc.set_nl_cons('grizzle3', -model.aux['grizzle3'], 0)
 
 
     #mpc.set_nl_cons('PSP', -model.aux['psp_safety'], 0)
-    mpc.set_nl_cons('kin', -model.aux['kin_safety'], 0, penalty_term_cons=1e10)
-   
+    #mpc.set_nl_cons('kin', model.aux['kin_safety'], 0)
+    #mpc.set_nl_cons('kin_min', model.aux['kin_safety_min'], 0)
+
     
     #print(model.u['u',1])
     #mpc.set_nl_cons('PSP2', -fabs(model.u['u',1]), ub=-0.05)
