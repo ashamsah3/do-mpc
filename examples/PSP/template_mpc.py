@@ -21,6 +21,7 @@
 #   along with do-mpc.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+from numpy.random import default_rng
 from casadi import *
 from casadi.tools import *
 import pdb
@@ -47,7 +48,7 @@ def template_mpc(model):
 
     mpc.set_param(**setup_mpc)
 
-    xg=9
+    xg=10
     yg=5
     xdg=0
     ydg=0
@@ -61,7 +62,7 @@ def template_mpc(model):
     mpc.set_rterm(u=1e-4)
 
     max_x = np.array([[100.0], [1], [100.0], [1]])
-    min_x = np.array([[-10.0], [-0.2], [-10.0], [-1]])
+    min_x = np.array([[-10.0], [-1], [-10.0], [-1]])
     max_u = np.array([[0.3], [0.3]])
     min_u = np.array([[-0.3], [-0.3]])
 
@@ -86,7 +87,13 @@ def template_mpc(model):
     def tvp_fun(t_ind):
         ind = t_ind // setup_mpc['t_step']
         
-        tvp_template['_tvp',:, 'dyn_obs'] = 10.5 - ind*0.2
+
+        tvp_template['_tvp',:, 'dyn_obs'] = 8.8 - ind*(0.225)
+        rng = default_rng()
+        vals = rng.standard_normal()
+        tvp_template['_tvp',:, 'dyn_obs_y'] = 8.8 - ind*(0.225+np.abs(vals)*0.3)
+        tvp_template['_tvp',:, 'dyn_obs_x'] = 8 + np.abs(vals)*0.1
+
 
         tvp_template['_tvp',:, 'stance'] = (-1)**(ind)
 
@@ -117,7 +124,7 @@ def template_mpc(model):
 
     omega=sqrt(9.81/0.8)
     
-    mpc.set_nl_cons('obstacles', model.aux['obstacle_distance'], 0)
+    mpc.set_nl_cons('obstacles', model.aux['obstacle_distance'], 0)#, penalty_term_cons=1e1)
     #mpc.set_nl_cons('obstacles', (1-0.5)*model.aux['hk1']- model.aux['hk1_n'],0)
     #mpc.set_nl_cons('dyn_obstacles', model.aux['dyn_obstacle_distance'], 0)
     mpc.set_nl_cons('grizzle1', model.aux['grizzle1'], 0)

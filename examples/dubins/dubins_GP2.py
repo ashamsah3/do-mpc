@@ -177,7 +177,7 @@ ax3.scatter(pred_t, pred_vy, label="pred")
 ax3.legend()
 
 
-sum_til = 3
+sum_til = 2
 sum_deltax=sum(mean_prediction[i:i+sum_til])
 sum_deltax_up = sum((mean_prediction[i:i+sum_til] + 1.96*std_prediction[i:i+sum_til].reshape(-1,1)).ravel())
 sum_deltax_dw = sum((mean_prediction[i:i+sum_til] - 1.96*std_prediction[i:i+sum_til].reshape(-1,1)).ravel())
@@ -212,7 +212,7 @@ ax1.scatter(xs[i-1]+ sum_deltax, ys[c-1]+sum_deltay, c="black", label="obs")
 #ax1.scatter(xs[i-1]+ sum_deltax_dw, ys[c-1]+sum_deltay_up, label="-+2std")
 #ax1.scatter(xs[i-1]+ sum_deltax_dw, ys[c-1]+sum_deltay_dw, label="--2std")
 
-ellipse2 = Ellipse(xy=(0, 0), width=2*sum((conf*std_prediction[i:b].reshape(-1,1)).ravel()),
+ellipse2 = Ellipse(xy=(xs[i-1]+ sum_deltax, ys[c-1]+sum_deltay), width=2*sum((conf*std_prediction[i:b].reshape(-1,1)).ravel()),
 					    height=2*sum((conf*std_prediction_y[i:b].reshape(-1,1)).ravel()), 
                         edgecolor='black', fc='None', lw=2)
 ax1.add_patch(ellipse2)

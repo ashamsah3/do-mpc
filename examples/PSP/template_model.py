@@ -52,6 +52,8 @@ def template_model(obstacles, symvar_type='SX'):
     #model.set_expression(expr_name='cost', expr=sum1(_x**2))
 
     dyn_obs = model.set_variable('_tvp', 'dyn_obs')
+    dyn_obs_x = model.set_variable('_tvp', 'dyn_obs_x')
+    dyn_obs_y = model.set_variable('_tvp', 'dyn_obs_y')
     stance = model.set_variable('_tvp', 'stance')
     cumm_th = model.set_variable('_tvp', 'cumm_th')
 
@@ -122,12 +124,13 @@ def template_model(obstacles, symvar_type='SX'):
        h_xk1= sqrt(((xk-obs['x'])/obs['r'])**2+((yk-obs['y'])/obs['r'])**2)-1#sqrt(((xk-obs['x']/obs['r']))**2+((yk-obs['y']/obs['r']))**2)-1 #((xk-obs['x'])**2+(yk-obs['y'])**2)-obs['r']*1.05 # np.sqrt(((xk-obs['y'])/obs['r'])**2 + ((yk-obs['y'])/obs['r'])**2)
        h_xk1_n= sqrt(((xk_n-obs['x'])/obs['r'])**2+((yk_n-obs['y'])/obs['r'])**2)-1
        #h_xk2= sqrt(((xk-obs['x2'])/obs['r2'])**2+((yk-obs['y2'])/obs['r2'])**2)-1#sqrt(((xk-obs['x2']/obs['r2']))**2+((yk-obs['y2']/obs['r2']))**2)-5 #((xk-obs['x'])**2+(yk-obs['y'])**2)-obs['r']*1.05 # np.sqrt(((xk-obs['y'])/obs['r'])**2 + ((yk-obs['y'])/obs['r'])**2)
-       h_xk3= sqrt(((xk-obs['x2'])/obs['r2']*1.2)**2 + ((yk-model.tvp['dyn_obs']-0.2)/obs['r2']*1.3)**2)-1
-       #h_xk3= sqrt(((xk-obs['x2'])/obs['r2']*1.1)**2 + ((yk-model.tvp['dyn_obs']-0.5)/obs['r2']*1.8)**2)-1
-       h_xk3_n= sqrt(((xk_n-obs['x2'])/obs['r2']*1.2)**2 + ((yk_n-(model.tvp['dyn_obs']-0.2))/obs['r2']*1.3)**2)-1
+       #h_xk3= sqrt(((xk_n-obs['x2'])/obs['r2']*1.2)**2 + ((yk_n-(model.tvp['dyn_obs']))/obs['r2']*1.4)**2)-1
+       h_xk3= sqrt(((xk-model.tvp['dyn_obs_x'])/obs['r2'])**2 + ((yk-model.tvp['dyn_obs_y'])/obs['r2'])**2)-1
+       h_xk3_n= sqrt(((xk_n-model.tvp['dyn_obs_x'])/obs['r2'])**2 + ((yk_n-(model.tvp['dyn_obs']))/obs['r2'])**2)-1
+       #h_xk3_n= sqrt(((xk_n-obs['x2'])/obs['r2']*1.2)**2 + ((yk_n-(model.tvp['dyn_obs']-0.3))/obs['r2']*1.6)**2)-1
        #h_xk= fmin(h_xk1,h_xk2)
        h_xk= ((1 - 0.1)*h_xk1 - h_xk1_n)
-       full_hxk3 = ((1 - 0.1)*h_xk3 - h_xk3_n)
+       full_hxk3 = ((1-0.7)*h_xk3 - h_xk3_n)
        h_xkmin = fmax(h_xk,full_hxk3)
        #obstacle_distance.extend([h_xk])
        obstacle_distance.extend([full_hxk3])
