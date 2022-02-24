@@ -4,7 +4,7 @@ from do_mpc.data import save_results, load_results
 
 
 
-def obstalce_obsrv(dt):
+def obstacle_obsrv(dt):
 	obstacle = load_results('./results/dubin.pkl')
 
 	xs = obstacle['mpc']['_x','x',0]
