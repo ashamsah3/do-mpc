@@ -6,7 +6,7 @@ from matplotlib.patches import Ellipse
 
 dt =0.3
 #load obstacle trajectr
-xs, ys, d_obs_x, d_obs_y, X = obstalce_obsrv(dt)
+xs, ys, d_obs_x, d_obs_y, X = obstacle_obsrv(dt)
 
 
 
