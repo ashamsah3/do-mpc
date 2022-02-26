@@ -24,6 +24,8 @@ import numpy as np
 from numpy.random import default_rng
 from casadi import *
 from casadi.tools import *
+from GP import *
+from obstacle_traj import *
 import pdb
 import sys
 sys.path.append('../../')
@@ -48,13 +50,13 @@ def template_mpc(model):
 
     mpc.set_param(**setup_mpc)
 
-    xg=10
-    yg=5
+    xg=5
+    yg=10
     xdg=0
     ydg=0
 
-    mterm = (-(model.x['x',1] - xdg)**2 + (model.x['x',3] - ydg)**2) + ((model.x['x',0] - xg)**2 + (model.x['x',2] - yg)**2)#model.aux['cost']
-    lterm = (-(model.x['x',1] - xdg)**2 + (model.x['x',3] - ydg)**2) + ((model.x['x',0] - xg)**2 + (model.x['x',2] - yg)**2) #model.aux['cost'] # terminal cost
+    mterm = (-(model.x['x',1] - xdg)**2 + (model.x['x',3] - ydg)**2) + 100*((model.x['x',0] - xg)**2 + (model.x['x',2] - yg)**2)#model.aux['cost']
+    lterm = (-(model.x['x',1] - xdg)**2 + (model.x['x',3] - ydg)**2) + 100*((model.x['x',0] - xg)**2 + (model.x['x',2] - yg)**2) #model.aux['cost'] # terminal cost
    # mterm = ((model.x['x',1] - 1)*(model.x['x',1] - 1)+ ((model.x['x',3] - 0)*(model.x['x',3] - 0)) + (model.x['x',2] - 0)*(model.x['x',2] - 0)) #model.aux['cost']
   #  lterm = ((model.x['x',1] - 1)*(model.x['x',1] - 1)+ ((model.x['x',3] - 0)*(model.x['x',3] - 0)) + (model.x['x',2] - 0)*(model.x['x',2] - 0)) #model.aux['cost'] # terminal cost
 
@@ -76,7 +78,9 @@ def template_mpc(model):
     #a, b = Ellipse_axes(mean, std, last_obs, 3*time_step (MAYBE))
     #distance = calc_dist(curr_robot(x,y), a, b)
 
+    xs, ys, d_obs_x, d_obs_y, X = obstacle_obsrv(setup_mpc['t_step'])
 
+    last =len(xs)-1
 
     tvp_template = mpc.get_tvp_template()
 
@@ -85,20 +89,56 @@ def template_mpc(model):
     #ind_switch = t_switch // setup_mpc['t_step']
 
     def tvp_fun(t_ind):
+
         ind = t_ind // setup_mpc['t_step']
         
+        int_ind = int(ind)
+        mem=3
+        if int_ind < last:
+            tvp_template['_tvp',:, 'dyn_obs_y'] = ys[int_ind]
+            tvp_template['_tvp',:, 'dyn_obs_x'] = xs[int_ind]
+            if ind > mem:
+              
+                mean_x, std_x, mean_y, std_y = GP(d_obs_x[int_ind-mem:int_ind].reshape(-1,1), d_obs_y[int_ind-mem:int_ind].reshape(-1,1), X[int_ind-mem:int_ind], X, int_ind)
+                conf = 1.96
+                horz = 3
+                delta_x, delta_y, h, w = pred(mean_x, std_x, mean_y, std_y, conf, horz)
+                tvp_template['_tvp',:, 'dyn_obs_y_pred'] = ys[int_ind] + delta_y
+                tvp_template['_tvp',:, 'dyn_obs_x_pred'] = xs[int_ind] + delta_x
+                tvp_template['_tvp',:, 'dyn_obs_ry'] = 1 + h
+                tvp_template['_tvp',:, 'dyn_obs_rx'] = 1 + w
+            else:
+             
+                tvp_template['_tvp',:, 'dyn_obs_y_pred'] = ys[int_ind]
+                tvp_template['_tvp',:, 'dyn_obs_x_pred'] = xs[int_ind]
+                tvp_template['_tvp',:, 'dyn_obs_ry'] = 1
+                tvp_template['_tvp',:, 'dyn_obs_rx'] = 1
+               
+        else:
+            tvp_template['_tvp',:, 'dyn_obs_y_pred'] = ys[last]
+            tvp_template['_tvp',:, 'dyn_obs_x_pred'] = xs[last]
+            tvp_template['_tvp',:, 'dyn_obs_ry'] = 1
+            tvp_template['_tvp',:, 'dyn_obs_rx'] = 1
+            tvp_template['_tvp',:, 'dyn_obs_y'] = ys[last]
+            tvp_template['_tvp',:, 'dyn_obs_x'] = xs[last]
 
-        tvp_template['_tvp',:, 'dyn_obs'] = 8.8 - ind*(0.225)
-        rng = default_rng()
-        vals = rng.standard_normal()
-        tvp_template['_tvp',:, 'dyn_obs_y'] = 8.8 - ind*(0.225+np.abs(vals)*0.3)
-        tvp_template['_tvp',:, 'dyn_obs_x'] = 8 + np.abs(vals)*0.1
+
+            
+        
+
+
+
+        #tvp_template['_tvp',:, 'dyn_obs'] = 8.8 - ind*(0.225)
+        #rng = default_rng()
+        #vals = rng.standard_normal()
+        #tvp_template['_tvp',:, 'dyn_obs_y'] = 8.8 - ind*(0.225+np.abs(vals)*0.3)
+        #tvp_template['_tvp',:, 'dyn_obs_x'] = 8 + np.abs(vals)*0.1
+
 
 
         tvp_template['_tvp',:, 'stance'] = (-1)**(ind)
 
-        tvp_template['_tvp',:, 'cumm_th'] = atan2(0,0)
-
+        
 
         
         return tvp_template
