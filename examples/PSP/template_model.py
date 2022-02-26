@@ -54,8 +54,12 @@ def template_model(obstacles, symvar_type='SX'):
     dyn_obs = model.set_variable('_tvp', 'dyn_obs')
     dyn_obs_x = model.set_variable('_tvp', 'dyn_obs_x')
     dyn_obs_y = model.set_variable('_tvp', 'dyn_obs_y')
+    dyn_obs_x_pred = model.set_variable('_tvp', 'dyn_obs_x_pred')
+    dyn_obs_y_pred = model.set_variable('_tvp', 'dyn_obs_y_pred')
+    dyn_obs_rx = model.set_variable('_tvp', 'dyn_obs_rx')
+    dyn_obs_ry = model.set_variable('_tvp', 'dyn_obs_ry')
     stance = model.set_variable('_tvp', 'stance')
-    cumm_th = model.set_variable('_tvp', 'cumm_th')
+    
 
     w=np.sqrt(9.81/0.8)
     T=0.4
@@ -87,16 +91,6 @@ def template_model(obstacles, symvar_type='SX'):
     delta_xk = xk_n - xk
     delta_yk = yk_n - yk
 
-    #delta_th = atan2(delta_xk, delta_yk) - 3.141592653/2
-    #th = atan2(xk, yk) - 3.141592653/2
-    #model.set_expression('delta_th',th + delta_th)
-    #model.set_expression('th',th)
-
-    #cum_th = model.tvp['cumm_th'] + delta_th
-    #th = cum_th + delta_th
-
-
-
     sin_th_k = delta_xk / sqrt(delta_xk*delta_xk + delta_yk*delta_yk)
     cos_th_k = delta_yk / sqrt(delta_xk*delta_xk + delta_yk*delta_yk)
 
@@ -126,7 +120,8 @@ def template_model(obstacles, symvar_type='SX'):
        #h_xk2= sqrt(((xk-obs['x2'])/obs['r2'])**2+((yk-obs['y2'])/obs['r2'])**2)-1#sqrt(((xk-obs['x2']/obs['r2']))**2+((yk-obs['y2']/obs['r2']))**2)-5 #((xk-obs['x'])**2+(yk-obs['y'])**2)-obs['r']*1.05 # np.sqrt(((xk-obs['y'])/obs['r'])**2 + ((yk-obs['y'])/obs['r'])**2)
        #h_xk3= sqrt(((xk_n-obs['x2'])/obs['r2']*1.2)**2 + ((yk_n-(model.tvp['dyn_obs']))/obs['r2']*1.4)**2)-1
        h_xk3= sqrt(((xk-model.tvp['dyn_obs_x'])/obs['r2'])**2 + ((yk-model.tvp['dyn_obs_y'])/obs['r2'])**2)-1
-       h_xk3_n= sqrt(((xk_n-model.tvp['dyn_obs_x'])/obs['r2'])**2 + ((yk_n-(model.tvp['dyn_obs']))/obs['r2'])**2)-1
+       #h_xk3_n= sqrt(((xk_n-model.tvp['dyn_obs_x'])/obs['r2'])**2 + ((yk_n-(model.tvp['dyn_obs_y']))/obs['r2'])**2)-1
+       h_xk3_n= sqrt(((xk_n-model.tvp['dyn_obs_x_pred'])/(obs['r2']*model.tvp['dyn_obs_rx']))**2 + ((yk_n-(model.tvp['dyn_obs_y_pred']))/(obs['r2']*model.tvp['dyn_obs_ry']))**2)-1
        #h_xk3_n= sqrt(((xk_n-obs['x2'])/obs['r2']*1.2)**2 + ((yk_n-(model.tvp['dyn_obs']-0.3))/obs['r2']*1.6)**2)-1
        #h_xk= fmin(h_xk1,h_xk2)
        h_xk= ((1 - 0.1)*h_xk1 - h_xk1_n)

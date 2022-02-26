@@ -11,10 +11,10 @@ from do_mpc.data import save_results, load_results
 
 
 def GP(obs_x, obs_y, time, X, t0):
-	y_train = obs_x
-	y_train_y = obs_y
+	y_train = obs_x.reshape(-1,1)
+	y_train_y = obs_y.reshape(-1,1)
 
-	X_train = time
+	X_train = time.reshape(-1,1)
 	last =len(X)-1
 	X = X[t0:last]
 
