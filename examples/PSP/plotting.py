@@ -20,7 +20,7 @@ from do_mpc.data import save_results, load_results
 
 
 #results = load_results('./results/006_PSP_turn.pkl')
-results = load_results('./results/003_stuck.pkl')
+results = load_results('./results/multi.pkl')
 
 x = results['mpc']['_x','x',0]
 y = results['mpc']['_x','x',2]
@@ -29,8 +29,8 @@ yd = results['mpc']['_x','x',3]
 px = results['mpc']['_u','u',0]
 py = results['mpc']['_u','u',1]
 
-dyn = results['mpc']['_tvp','dyn_obs',0]
-dth = results['mpc']['_aux','delta_th']
+#dyn = results['mpc']['_tvp','dyn_obs',0]
+#dth = results['mpc']['_aux','delta_th']
 h = results['mpc']['_aux','obstacle_distance']
 
 #hk1 = results['mpc']['_aux','hk1']
@@ -43,6 +43,7 @@ stance = results['mpc']['_tvp','stance',0]
 fig = plt.figure()
 ax1 = fig.add_subplot(2,1,1)
 ax2 = fig.add_subplot(2,1,2)
+'''
 #ax3 = fig.add_subplot(3,1,3)
 ax1.axis('equal')
 ax1.plot(x,y)
@@ -57,6 +58,8 @@ ax1.add_artist(circle2)
 ax1.add_artist(goal)
 plt.title('LIP with PSP Constraints')
 #ax2.plot((1-0.5)*hk1 - hk1_n)
+'''
+ax1.plot(yd)
 ax2.plot(x,h)
 '''
 ax2.scatter(px+x,px*0)
@@ -65,8 +68,6 @@ ax3.scatter(py,y-y)
 ax3.scatter(y-y,yd)
 '''
 
-print(dth)
-print(np.cos(dth))
 #print(px)
 #ax3.scatter(py+y,py*0)
 plt.show()

@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.stats
+from scipy.stats import norm
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.gaussian_process.kernels import ExpSineSquared
@@ -51,6 +52,13 @@ def pred(mean_x, std_x, mean_y, std_y, conf, horz):
 	h=sum(std_y[0:horz]*conf)
 
 	return delta_x, delta_y, h, w,
+
+
+def Var(q, mean, std):
+	var = norm.ppf(q,mean,std)
+	cvar = (1/(q))*scipy.stats.norm.expect(lambda x: x, lb = var)
+
+	return var, cvar
 
 
 

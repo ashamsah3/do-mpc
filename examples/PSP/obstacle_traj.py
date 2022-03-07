@@ -1,14 +1,25 @@
 import numpy as np
 from do_mpc.data import save_results, load_results
+from numpy.random import default_rng
 
 
 
 
-def obstacle_obsrv(dt):
-	obstacle = load_results('./results/dubin.pkl')
-
+def obstacle_obsrv(dt, x0, xf, y0, yf, inc):
+	#obstacle = load_results('./results/dubin.pkl')
+	'''
 	xs = obstacle['mpc']['_x','x',0]
 	ys = obstacle['mpc']['_x','x',1]
+	'''
+	rng = np.random.default_rng()
+	xs0 = (np.arange(x0, xf, inc)).reshape(-1,1)
+	
+	#xs = xs0 + (0.01 * rng.standard_normal(size=len(xs0))).reshape(-1,1)
+	xs = xs0 + (np.random.uniform(-0.2,0.2,size=len(xs0))).reshape(-1,1)
+	ys0 = xs*0 + y0 
+	#ys = ys0 + (0.02 * rng.standard_normal(size=len(xs0))).reshape(-1,1)
+	ys = ys0 + (np.random.uniform(-0.2,0.2,size=len(xs0))).reshape(-1,1)
+
 	delta_xs = xs*0
 	delta_ys = ys*0
 	size=len(xs)

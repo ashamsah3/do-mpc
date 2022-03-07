@@ -50,8 +50,8 @@ def template_mpc(model):
 
     mpc.set_param(**setup_mpc)
 
-    xg=5
-    yg=10
+    xg=0
+    yg=6
     xdg=0
     ydg=0
 
@@ -78,7 +78,8 @@ def template_mpc(model):
     #a, b = Ellipse_axes(mean, std, last_obs, 3*time_step (MAYBE))
     #distance = calc_dist(curr_robot(x,y), a, b)
 
-    xs, ys, d_obs_x, d_obs_y, X = obstacle_obsrv(setup_mpc['t_step'])
+    xs, ys, d_obs_x, d_obs_y, X = obstacle_obsrv(setup_mpc['t_step'], 2, -2, 2, 0, -0.2)
+    xs2, ys2, d_obs_x2, d_obs_y2, X2 = obstacle_obsrv(setup_mpc['t_step'], -3, 2, 4, 0, 0.2)
 
     last =len(xs)-1
 
@@ -97,22 +98,46 @@ def template_mpc(model):
         if int_ind < last:
             tvp_template['_tvp',:, 'dyn_obs_y'] = ys[int_ind]
             tvp_template['_tvp',:, 'dyn_obs_x'] = xs[int_ind]
+            tvp_template['_tvp',:, 'dyn_obs_y2'] = ys2[int_ind]
+            tvp_template['_tvp',:, 'dyn_obs_x2'] = xs2[int_ind]
+            #tvp_template['_tvp',:, 'D'] = 0.05 
             if ind > mem:
-              
+
                 mean_x, std_x, mean_y, std_y = GP(d_obs_x[int_ind-mem:int_ind].reshape(-1,1), d_obs_y[int_ind-mem:int_ind].reshape(-1,1), X[int_ind-mem:int_ind], X, int_ind)
                 conf = 1.96
-                horz = 3
+                horz = 1
                 delta_x, delta_y, h, w = pred(mean_x, std_x, mean_y, std_y, conf, horz)
                 tvp_template['_tvp',:, 'dyn_obs_y_pred'] = ys[int_ind] + delta_y
                 tvp_template['_tvp',:, 'dyn_obs_x_pred'] = xs[int_ind] + delta_x
                 tvp_template['_tvp',:, 'dyn_obs_ry'] = 1 + h
                 tvp_template['_tvp',:, 'dyn_obs_rx'] = 1 + w
+
+
+                mean_x2, std_x2, mean_y2, std_y2 = GP(d_obs_x2[int_ind-mem:int_ind].reshape(-1,1), d_obs_y2[int_ind-mem:int_ind].reshape(-1,1), X2[int_ind-mem:int_ind], X2, int_ind)
+                conf = 1.96
+                horz = 1
+                delta_x2, delta_y2, h2, w2 = pred(mean_x2, std_x2, mean_y2, std_y2, conf, horz)
+                tvp_template['_tvp',:, 'dyn_obs_y_pred2'] = ys2[int_ind] + delta_y2
+                tvp_template['_tvp',:, 'dyn_obs_x_pred2'] = xs2[int_ind] + delta_x2
+                tvp_template['_tvp',:, 'dyn_obs_ry2'] = 1 + h2
+                tvp_template['_tvp',:, 'dyn_obs_rx2'] = 1 + w2
+
+                #D = sqrt(((delta_x_2))**2 + ((delta_y_2))**2)-1
+                #tvp_template['_tvp',:, 'D'] = D 
+
+
+
             else:
              
                 tvp_template['_tvp',:, 'dyn_obs_y_pred'] = ys[int_ind]
                 tvp_template['_tvp',:, 'dyn_obs_x_pred'] = xs[int_ind]
                 tvp_template['_tvp',:, 'dyn_obs_ry'] = 1
                 tvp_template['_tvp',:, 'dyn_obs_rx'] = 1
+                tvp_template['_tvp',:, 'dyn_obs_y_pred2'] = ys2[int_ind]
+                tvp_template['_tvp',:, 'dyn_obs_x_pred2'] = xs2[int_ind]
+                tvp_template['_tvp',:, 'dyn_obs_ry2'] = 1
+                tvp_template['_tvp',:, 'dyn_obs_rx2'] = 1
+                #tvp_template['_tvp',:, 'D'] = 0.05 
                
         else:
             tvp_template['_tvp',:, 'dyn_obs_y_pred'] = ys[last]
@@ -121,6 +146,14 @@ def template_mpc(model):
             tvp_template['_tvp',:, 'dyn_obs_rx'] = 1
             tvp_template['_tvp',:, 'dyn_obs_y'] = ys[last]
             tvp_template['_tvp',:, 'dyn_obs_x'] = xs[last]
+
+            tvp_template['_tvp',:, 'dyn_obs_y_pred2'] = ys2[last]
+            tvp_template['_tvp',:, 'dyn_obs_x_pred2'] = xs2[last]
+            tvp_template['_tvp',:, 'dyn_obs_ry2'] = 1
+            tvp_template['_tvp',:, 'dyn_obs_rx2'] = 1
+            tvp_template['_tvp',:, 'dyn_obs_y2'] = ys2[last]
+            tvp_template['_tvp',:, 'dyn_obs_x2'] = xs2[last]
+            #tvp_template['_tvp',:, 'D'] = 0.05
 
 
             

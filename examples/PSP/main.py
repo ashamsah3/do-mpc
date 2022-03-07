@@ -41,7 +41,7 @@ store_results = True
 
 
 obstacles = [
-    {'x': 5, 'y': 8.5, 'r':1, 'x2': 8, 'y2': 8.8, 'r2': 0.7},
+    {'x': 5, 'y': 8.5, 'r':1, 'x2': 8, 'y2': 8.8, 'r2': 0.5},
 ]
 
 
@@ -60,7 +60,7 @@ Set initial state
 np.random.seed(99)
 
 #e = #np.ones([model.n_x,1])
-x0 = np.array([[1], [0.001], [6], [0.001]]) #np.random.uniform(-3*e,3*e) # Values between +3 and +3 for all states
+x0 = np.array([[0], [0.001], [0], [0.001]]) #np.random.uniform(-3*e,3*e) # Values between +3 and +3 for all states
 mpc.x0 = x0
 simulator.x0 = x0
 estimator.x0 = x0
@@ -95,4 +95,4 @@ input('Press any key to exit.')
 
 # Store results:
 if store_results:
-    do_mpc.data.save_results([mpc, simulator], 'pred_obs')
+    do_mpc.data.save_results([mpc, simulator], 'uniform')

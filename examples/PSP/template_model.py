@@ -58,7 +58,14 @@ def template_model(obstacles, symvar_type='SX'):
     dyn_obs_y_pred = model.set_variable('_tvp', 'dyn_obs_y_pred')
     dyn_obs_rx = model.set_variable('_tvp', 'dyn_obs_rx')
     dyn_obs_ry = model.set_variable('_tvp', 'dyn_obs_ry')
+    dyn_obs_x = model.set_variable('_tvp', 'dyn_obs_x2')
+    dyn_obs_y = model.set_variable('_tvp', 'dyn_obs_y2')
+    dyn_obs_x_pred = model.set_variable('_tvp', 'dyn_obs_x_pred2')
+    dyn_obs_y_pred = model.set_variable('_tvp', 'dyn_obs_y_pred2')
+    dyn_obs_rx = model.set_variable('_tvp', 'dyn_obs_rx2')
+    dyn_obs_ry = model.set_variable('_tvp', 'dyn_obs_ry2')
     stance = model.set_variable('_tvp', 'stance')
+    D = model.set_variable('_tvp', 'D')
     
 
     w=np.sqrt(9.81/0.8)
@@ -85,6 +92,9 @@ def template_model(obstacles, symvar_type='SX'):
     xk = model.x['x',0]
     yk = model.x['x',2]
 
+    u1 = model.u['u',0]
+    u2 = model.u['u',1]
+
     xk_n = x_next[0]
     yk_n = x_next[2]
 
@@ -97,8 +107,8 @@ def template_model(obstacles, symvar_type='SX'):
     
     psp_safety = model.tvp['stance']*(fabs(model.x['x',3])-(fabs(model.u['u',1])*w)) #theorem2
     #kin_safety = model.tvp['stance']*(fabs(model.u['u',1])-0.15)#-0.01 everyting is less than pos 0.01
-    kin_safety = (delta_xk**2 + delta_yk**2) - 0.5**2  
-    kin_safety_min = 0.1**2 - (delta_xk**2 + delta_yk**2)
+    kin_safety = (delta_xk**2 + delta_yk**2) - 0.4**2  
+    kin_safety_min = 0.4**2 - (delta_xk**2 + delta_yk**2)
     grizzle1 = (sin_th_k* model.u['u',0] + cos_th_k* model.u['u',1]) - 0.3
     grizzle11 = -0.2 -(sin_th_k* model.u['u',0] + cos_th_k* model.u['u',1]) 
     grizzle2 = model.tvp['stance']*(-cos_th_k * model.u['u',0] + sin_th_k*model.u['u',1]) - (0.25)
@@ -111,28 +121,46 @@ def template_model(obstacles, symvar_type='SX'):
 
     h_xk11 = []
     h_xk1_n1 = []
+    
+    
+    gamma = 0.4
+    sensor_r = 1
 
     for obs in obstacles:
+
        #h_xk1= sqrt(((xk-obs['x']))**2+((yk-obs['y']))**2)-(obs['r']+0.2)#sqrt(((xk-obs['x']/obs['r']))**2+((yk-obs['y']/obs['r']))**2)-1 #((xk-obs['x'])**2+(yk-obs['y'])**2)-obs['r']*1.05 # np.sqrt(((xk-obs['y'])/obs['r'])**2 + ((yk-obs['y'])/obs['r'])**2)
        #h_xk2= sqrt(((xk-obs['x2']))**2+((yk-obs['y2']))**2)-(obs['r2']+0.2)#sqrt(((xk-obs['x2']/obs['r2']))**2+((yk-obs['y2']/obs['r2']))**2)-5 #((xk-obs['x'])**2+(yk-obs['y'])**2)-obs['r']*1.05 # np.sqrt(((xk-obs['y'])/obs['r'])**2 + ((yk-obs['y'])/obs['r'])**2)
-       h_xk1= sqrt(((xk-obs['x'])/obs['r'])**2+((yk-obs['y'])/obs['r'])**2)-1#sqrt(((xk-obs['x']/obs['r']))**2+((yk-obs['y']/obs['r']))**2)-1 #((xk-obs['x'])**2+(yk-obs['y'])**2)-obs['r']*1.05 # np.sqrt(((xk-obs['y'])/obs['r'])**2 + ((yk-obs['y'])/obs['r'])**2)
-       h_xk1_n= sqrt(((xk_n-obs['x'])/obs['r'])**2+((yk_n-obs['y'])/obs['r'])**2)-1
-       #h_xk2= sqrt(((xk-obs['x2'])/obs['r2'])**2+((yk-obs['y2'])/obs['r2'])**2)-1#sqrt(((xk-obs['x2']/obs['r2']))**2+((yk-obs['y2']/obs['r2']))**2)-5 #((xk-obs['x'])**2+(yk-obs['y'])**2)-obs['r']*1.05 # np.sqrt(((xk-obs['y'])/obs['r'])**2 + ((yk-obs['y'])/obs['r'])**2)
-       #h_xk3= sqrt(((xk_n-obs['x2'])/obs['r2']*1.2)**2 + ((yk_n-(model.tvp['dyn_obs']))/obs['r2']*1.4)**2)-1
+       h_xk1= sqrt(((xk-model.tvp['dyn_obs_x2'])/obs['r2'])**2 + ((yk-model.tvp['dyn_obs_y2'])/obs['r2'])**2)-1 #sqrt(((xk-obs['x']/obs['r']))**2+((yk-obs['y']/obs['r']))**2)-1 #((xk-obs['x'])**2+(yk-obs['y'])**2)-obs['r']*1.05 # np.sqrt(((xk-obs['y'])/obs['r'])**2 + ((yk-obs['y'])/obs['r'])**2)
+       h_xk1_n= sqrt(((xk_n-model.tvp['dyn_obs_x2'])/obs['r2'])**2 + ((yk_n-(model.tvp['dyn_obs_y2']))/obs['r2'])**2)-1
+       h_xk1_n_aug= sqrt(((xk_n-model.tvp['dyn_obs_x_pred2'])/(obs['r2']*model.tvp['dyn_obs_rx2']))**2 + ((yk_n-(model.tvp['dyn_obs_y_pred2']))/(obs['r2']*model.tvp['dyn_obs_ry2']))**2)-1
+       h_xk1_min= fmin(h_xk1_n,h_xk1_n_aug)
+       full_hxk1 = ((1-gamma)*h_xk1 - h_xk1_min)
+
+
        h_xk3= sqrt(((xk-model.tvp['dyn_obs_x'])/obs['r2'])**2 + ((yk-model.tvp['dyn_obs_y'])/obs['r2'])**2)-1
-       #h_xk3_n= sqrt(((xk_n-model.tvp['dyn_obs_x'])/obs['r2'])**2 + ((yk_n-(model.tvp['dyn_obs_y']))/obs['r2'])**2)-1
-       h_xk3_n= sqrt(((xk_n-model.tvp['dyn_obs_x_pred'])/(obs['r2']*model.tvp['dyn_obs_rx']))**2 + ((yk_n-(model.tvp['dyn_obs_y_pred']))/(obs['r2']*model.tvp['dyn_obs_ry']))**2)-1
-       #h_xk3_n= sqrt(((xk_n-obs['x2'])/obs['r2']*1.2)**2 + ((yk_n-(model.tvp['dyn_obs']-0.3))/obs['r2']*1.6)**2)-1
-       #h_xk= fmin(h_xk1,h_xk2)
-       h_xk= ((1 - 0.1)*h_xk1 - h_xk1_n)
-       full_hxk3 = ((1-0.7)*h_xk3 - h_xk3_n)
-       h_xkmin = fmax(h_xk,full_hxk3)
-       #obstacle_distance.extend([h_xk])
-       obstacle_distance.extend([full_hxk3])
-       #obstacle_distance.extend([h_xkmin])
-      
+       h_xk3_n= sqrt(((xk_n-model.tvp['dyn_obs_x'])/obs['r2'])**2 + ((yk_n-(model.tvp['dyn_obs_y']))/obs['r2'])**2)-1
+       h_xk3_n_aug= sqrt(((xk_n-model.tvp['dyn_obs_x_pred'])/(obs['r2']*model.tvp['dyn_obs_rx']))**2 + ((yk_n-(model.tvp['dyn_obs_y_pred']))/(obs['r2']*model.tvp['dyn_obs_ry']))**2)-1
+       h_xk3_min= fmin(h_xk3_n,h_xk3_n_aug)
+       full_hxk3 = ((1-gamma)*h_xk3 - h_xk3_min)
+       CBF = fmax(full_hxk1,full_hxk3)
+       obstacle_distance.extend([CBF])
+
+
       
 
+
+       #h_xkmin = fmax(h_xk,full_hxk3)
+       #obstacle_distance.extend([h_xk])
+       
+       #obstacle_distance.extend([h_xkmin])
+      
+    #min_dist = fmin(h_xk1,h_xk3)
+
+    #if min_dist < sensor_r/2:
+    #  obstacle_distance.extend([CBF])
+    #else:
+     # obstacle_distance.extend([-1000])
+    
     model.set_expression('obstacle_distance',vertcat(*obstacle_distance))
     #model.set_expression('hk1',vertcat(*h_xk11))
     #model.set_expression('hk1_n',vertcat(*h_xk1_n1))
