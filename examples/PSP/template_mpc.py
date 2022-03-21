@@ -50,13 +50,13 @@ def template_mpc(model):
 
     mpc.set_param(**setup_mpc)
 
-    xg=0
-    yg=6
+    #xg=0
+    #yg=6
     xdg=0
     ydg=0
 
-    mterm = (-(model.x['x',1] - xdg)**2 + (model.x['x',3] - ydg)**2) + 100*((model.x['x',0] - xg)**2 + (model.x['x',2] - yg)**2)#model.aux['cost']
-    lterm = (-(model.x['x',1] - xdg)**2 + (model.x['x',3] - ydg)**2) + 100*((model.x['x',0] - xg)**2 + (model.x['x',2] - yg)**2) #model.aux['cost'] # terminal cost
+    mterm = (-(model.x['x',1] - xdg)**2 + (model.x['x',3] - ydg)**2) + 10*((model.x['x',0] - model.tvp['xg'])**2 + (model.x['x',2] - model.tvp['yg'])**2) #model.aux['cost']
+    lterm = (-(model.x['x',1] - xdg)**2 + (model.x['x',3] - ydg)**2) + 10*((model.x['x',0] - model.tvp['xg'])**2 + (model.x['x',2] - model.tvp['yg'])**2) #+ 10* model.aux['obstacle_distance']**2#model.aux['cost'] # terminal cost
    # mterm = ((model.x['x',1] - 1)*(model.x['x',1] - 1)+ ((model.x['x',3] - 0)*(model.x['x',3] - 0)) + (model.x['x',2] - 0)*(model.x['x',2] - 0)) #model.aux['cost']
   #  lterm = ((model.x['x',1] - 1)*(model.x['x',1] - 1)+ ((model.x['x',3] - 0)*(model.x['x',3] - 0)) + (model.x['x',2] - 0)*(model.x['x',2] - 0)) #model.aux['cost'] # terminal cost
 
@@ -105,7 +105,7 @@ def template_mpc(model):
 
                 mean_x, std_x, mean_y, std_y = GP(d_obs_x[int_ind-mem:int_ind].reshape(-1,1), d_obs_y[int_ind-mem:int_ind].reshape(-1,1), X[int_ind-mem:int_ind], X, int_ind)
                 conf = 1.96
-                horz = 1
+                horz = 3
                 delta_x, delta_y, h, w = pred(mean_x, std_x, mean_y, std_y, conf, horz)
                 tvp_template['_tvp',:, 'dyn_obs_y_pred'] = ys[int_ind] + delta_y
                 tvp_template['_tvp',:, 'dyn_obs_x_pred'] = xs[int_ind] + delta_x
@@ -115,7 +115,7 @@ def template_mpc(model):
 
                 mean_x2, std_x2, mean_y2, std_y2 = GP(d_obs_x2[int_ind-mem:int_ind].reshape(-1,1), d_obs_y2[int_ind-mem:int_ind].reshape(-1,1), X2[int_ind-mem:int_ind], X2, int_ind)
                 conf = 1.96
-                horz = 1
+                horz = 3
                 delta_x2, delta_y2, h2, w2 = pred(mean_x2, std_x2, mean_y2, std_y2, conf, horz)
                 tvp_template['_tvp',:, 'dyn_obs_y_pred2'] = ys2[int_ind] + delta_y2
                 tvp_template['_tvp',:, 'dyn_obs_x_pred2'] = xs2[int_ind] + delta_x2
@@ -157,7 +157,14 @@ def template_mpc(model):
 
 
             
-        
+        dist = sqrt(((model.x['x',0] - model.tvp['xg'])**2 + (model.x['x',2] - model.tvp['yg'])**2))
+
+        if ind <= 10:
+            tvp_template['_tvp',:, 'xg'] = 0
+            tvp_template['_tvp',:, 'yg'] = 6
+        else:
+                tvp_template['_tvp',:, 'xg'] = 0
+                tvp_template['_tvp',:, 'yg'] = 6
 
 
 
@@ -208,8 +215,8 @@ def template_mpc(model):
 
 
     #mpc.set_nl_cons('PSP', -model.aux['psp_safety'], 0)
-    #mpc.set_nl_cons('kin', model.aux['kin_safety'], 0)
-    #mpc.set_nl_cons('kin_min', model.aux['kin_safety_min'], 0)
+    mpc.set_nl_cons('kin', model.aux['kin_safety'], 0)
+    mpc.set_nl_cons('kin_min', model.aux['kin_safety_min'], 0)
 
     
     #print(model.u['u',1])

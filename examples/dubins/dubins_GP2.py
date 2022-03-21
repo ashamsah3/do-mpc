@@ -177,7 +177,7 @@ ax3.scatter(pred_t, pred_vy, label="pred")
 ax3.legend()
 
 
-sum_til = 2
+sum_til = 5
 sum_deltax=sum(mean_prediction[i:i+sum_til])
 sum_deltax_up = sum((mean_prediction[i:i+sum_til] + 1.96*std_prediction[i:i+sum_til].reshape(-1,1)).ravel())
 sum_deltax_dw = sum((mean_prediction[i:i+sum_til] - 1.96*std_prediction[i:i+sum_til].reshape(-1,1)).ravel())

@@ -5,7 +5,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 from sklearn.gaussian_process.kernels import ExpSineSquared
 from do_mpc.data import save_results, load_results
-
+import time
 
 
 
@@ -54,11 +54,17 @@ def pred(mean_x, std_x, mean_y, std_y, conf, horz):
 	return delta_x, delta_y, h, w,
 
 
-def Var(q, mean, std):
-	var = norm.ppf(q,mean,std)
-	cvar = (1/(q))*scipy.stats.norm.expect(lambda x: x, lb = var)
+def Var(q, mean, std, x):
+	dist = mean-x
 
-	return var, cvar
+	var = norm.ppf(q,dist,std)
+	#tic = time.perf_counter()
+	cvar = (1/(1-q))*scipy.stats.norm.expect(lambda x: x, lb = var)
+	#toc = time.perf_counter()
+	#print(f"Downloaded the tutorial in {toc - tic:0.4f} seconds")
+
+
+	return var, cvar, dist
 
 
 

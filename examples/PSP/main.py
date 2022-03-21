@@ -95,4 +95,4 @@ input('Press any key to exit.')
 
 # Store results:
 if store_results:
-    do_mpc.data.save_results([mpc, simulator], 'uniform')
+    do_mpc.data.save_results([mpc, simulator], 'heading')

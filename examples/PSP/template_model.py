@@ -50,7 +50,8 @@ def template_model(obstacles, symvar_type='SX'):
     # Set expression. These can be used in the cost function, as non-linear constraints
     # or just to monitor another output.
     #model.set_expression(expr_name='cost', expr=sum1(_x**2))
-
+    xg = model.set_variable('_tvp', 'xg')
+    yg = model.set_variable('_tvp', 'yg')
     dyn_obs = model.set_variable('_tvp', 'dyn_obs')
     dyn_obs_x = model.set_variable('_tvp', 'dyn_obs_x')
     dyn_obs_y = model.set_variable('_tvp', 'dyn_obs_y')
@@ -66,6 +67,7 @@ def template_model(obstacles, symvar_type='SX'):
     dyn_obs_ry = model.set_variable('_tvp', 'dyn_obs_ry2')
     stance = model.set_variable('_tvp', 'stance')
     D = model.set_variable('_tvp', 'D')
+    #heading = model.set_variable('_tvp', 'hea')
     
 
     w=np.sqrt(9.81/0.8)
@@ -86,6 +88,11 @@ def template_model(obstacles, symvar_type='SX'):
     x_next = A@_x+B@_u
     model.set_rhs('x', x_next)
 
+
+
+    
+
+
     # Calculations to avoid obstacles:
 
     # get x and y position 
@@ -104,15 +111,29 @@ def template_model(obstacles, symvar_type='SX'):
     sin_th_k = delta_xk / sqrt(delta_xk*delta_xk + delta_yk*delta_yk)
     cos_th_k = delta_yk / sqrt(delta_xk*delta_xk + delta_yk*delta_yk)
 
+
+    # Calculating heading angle 
+
+    heading = atan2(delta_yk,delta_xk)
+
+    model.set_expression('heading',heading)
+
     
-    psp_safety = model.tvp['stance']*(fabs(model.x['x',3])-(fabs(model.u['u',1])*w)) #theorem2
+    psp_safety = model.tvp['stance']*(fabs(model.x['x',3])-(fabs(model.u['u',1])*w)) 
+    psp_safety = model.tvp['stance']*(fabs(model.x['x',3])-(fabs(model.u['u',1])*w)) 
+
+
     #kin_safety = model.tvp['stance']*(fabs(model.u['u',1])-0.15)#-0.01 everyting is less than pos 0.01
-    kin_safety = (delta_xk**2 + delta_yk**2) - 0.4**2  
-    kin_safety_min = 0.4**2 - (delta_xk**2 + delta_yk**2)
+    kin_safety = (delta_xk**2 + delta_yk**2) - (0.4**2) 
+    kin_safety_min = (0.1**2) - (delta_xk**2 + delta_yk**2)
+
+
     grizzle1 = (sin_th_k* model.u['u',0] + cos_th_k* model.u['u',1]) - 0.3
     grizzle11 = -0.2 -(sin_th_k* model.u['u',0] + cos_th_k* model.u['u',1]) 
     grizzle2 = model.tvp['stance']*(-cos_th_k * model.u['u',0] + sin_th_k*model.u['u',1]) - (0.25)
     grizzle22= (0.05) - ((-cos_th_k*model.u['u',0] + sin_th_k*model.u['u',1])*model.tvp['stance'])
+
+
     #grizzle3 = (delta_xk**2 + delta_yk**2)-0.04
 
     obstacle_distance = []
@@ -123,7 +144,7 @@ def template_model(obstacles, symvar_type='SX'):
     h_xk1_n1 = []
     
     
-    gamma = 0.4
+    gamma = 0.5
     sensor_r = 1
 
     for obs in obstacles:
@@ -145,6 +166,13 @@ def template_model(obstacles, symvar_type='SX'):
        CBF = fmax(full_hxk1,full_hxk3)
        obstacle_distance.extend([CBF])
 
+       gamma_e = (1-gamma)*h_xk3
+       hn_aug = h_xk3_n_aug
+       hn = h_xk3_n
+
+
+
+
 
       
 
@@ -160,7 +188,11 @@ def template_model(obstacles, symvar_type='SX'):
     #  obstacle_distance.extend([CBF])
     #else:
      # obstacle_distance.extend([-1000])
-    
+
+
+    model.set_expression('gamma',gamma_e)
+    model.set_expression('hn_aug',hn_aug)
+    model.set_expression('hn',hn)
     model.set_expression('obstacle_distance',vertcat(*obstacle_distance))
     #model.set_expression('hk1',vertcat(*h_xk11))
     #model.set_expression('hk1_n',vertcat(*h_xk1_n1))

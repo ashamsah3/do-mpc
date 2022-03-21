@@ -17,10 +17,11 @@ from template_simulator import template_simulator
 from matplotlib.animation import FuncAnimation, FFMpegWriter, ImageMagickWriter
 from matplotlib.patches import Circle
 from matplotlib.patches import Ellipse
+from matplotlib.patches import Arrow
 from do_mpc.data import save_results, load_results
 
 #results = load_results('./results/007_PSP_turn.pkl')
-results = load_results('./results/001_uniform.pkl')
+results = load_results('./results/heading.pkl')
 
 x = results['mpc']['_x','x',0]
 y = results['mpc']['_x','x',2]
@@ -37,12 +38,25 @@ dyn_rx = results['mpc']['_tvp','dyn_obs_rx',0]
 dyn_y_pred = results['mpc']['_tvp','dyn_obs_y_pred',0]
 dyn_x_pred = results['mpc']['_tvp','dyn_obs_x_pred',0]
 
+gamma = results['mpc']['_aux','gamma']
+hn_aug = results['mpc']['_aux','hn_aug']
+
+heading = results['mpc']['_aux','heading']
+heading_g=[]
+
+for i in range(1,len(heading)-1):
+    print(i)
+    heading_g.append(sum(heading[0:i])[0])
+
+print(heading_g)
+
 dyn_y2 = results['mpc']['_tvp','dyn_obs_y2',0]
 dyn_x2 = results['mpc']['_tvp','dyn_obs_x2',0]
 dyn_ry2 = results['mpc']['_tvp','dyn_obs_ry2',0]
 dyn_rx2 = results['mpc']['_tvp','dyn_obs_rx2',0]
 dyn_y_pred2 = results['mpc']['_tvp','dyn_obs_y_pred2',0]
 dyn_x_pred2 = results['mpc']['_tvp','dyn_obs_x_pred2',0]
+
 
 r = 0.5
 sensor_r = 1
@@ -61,7 +75,7 @@ patch3= plt.Circle((-px[0]+x[0],-py[0]+y[0]), 0.01)
 
 circle1 = Circle((5, 8.5), 1, alpha=0.5)
 circle2 = Circle((8, 9), 0.7, alpha=0.5)
-goal = Circle((5, 10), 0.1, color="green", label="goal")
+goal = Circle((0, 6), 0.1, color="green", label="goal")
 #circle1 = Circle((0.5, 9.25), 0.5, alpha=0.5)
 #circle2 = Circle((1.8, 9.25), 0.5, alpha=0.5)
 #goal = Circle((1.5, 8.5), 0.1, color="red", alpha=0.5)
@@ -85,7 +99,12 @@ ax.add_patch(patchp2)
 #print(np.sqrt(((x[1]-8)/0.7*1.2)**2 + ((y[1]-dyn[0])/0.7*1.4)**2)-1)
 
 patch = Circle((dyn_x[0], dyn_y[0]), r, fc='y', alpha=0.2, label="obstacle")
+patchg = Circle((dyn_x[0], dyn_y[0]), gamma[0], edgecolor='blue', fc='None', alpha=0.2, label="obstacle")
+patch_aug = Circle((dyn_x[0], dyn_y[0]), hn_aug[0], edgecolor='red', fc='None', alpha=0.2, label="obstacle")
 patch2 = Circle((dyn_x2[0], dyn_y2[0]), r, fc='y', alpha=0.2, label="obstacle")
+
+arrow = Arrow(x[0],y[0],0.15*cos(heading[0]),0.15*sin(heading[0]), width=0.2, fc="red")
+ax.add_patch(arrow)
 
 def init():
     ax.add_patch(patchp)
@@ -103,15 +122,23 @@ def animate(i):
     ax.add_artist(patch_com)
     ax.add_artist(patch3)
 
+    arrow = plt.Arrow(x[i],y[i],0.15*cos(heading[i]),0.15*sin(heading[i]), width=0.2, fc="red")
+    ax.add_patch(arrow)
     x_obs = dyn_x[i]
     y_obs = dyn_y[i]
     #patch = plt.Circle((x_obs, y_obs), 0.7, fc='y', alpha=0.9)
-    patch.set_center((x_obs, y_obs)) #just moving the plot and nnot over plotting
+    patch.set_center((x_obs, y_obs))
+     #just moving the plot and nnot over plotting
     x_obsp = dyn_x_pred[i]
     y_obsp = dyn_y_pred[i]
     patchp.set_center((x_obsp, y_obsp))
     patchp.height = 2*dyn_ry[i]*r
     patchp.width = 2*dyn_rx[i]*r
+    patchg.set_center((x_obs, y_obs))
+    patchg.radius=r+gamma[i]
+
+    patch_aug.set_center((x_obsp, y_obsp))
+    patch_aug.radius=r+hn_aug[i]
 
     x_obs2 = dyn_x2[i]
     y_obs2 = dyn_y2[i]
@@ -127,7 +154,8 @@ def animate(i):
     #ax.add_artist(sensor)
 
     ax.add_artist(patch)
-
+    #ax.add_artist(patchg)
+    #ax.add_artist(patch_aug)
     ax.add_patch(patchp)
 
     ax.add_artist(patch2)
