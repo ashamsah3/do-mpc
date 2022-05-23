@@ -14,10 +14,10 @@ def obstacle_obsrv(dt, x0, xf, y0, yf, inc):
 	rng = np.random.default_rng()
 	xs0 = (np.arange(x0, xf, inc)).reshape(-1,1)
 	
-	xs = xs0 #+ (0.01 * rng.standard_normal(size=len(xs0))).reshape(-1,1)
+	xs = xs0 + (0.01 * rng.standard_normal(size=len(xs0))).reshape(-1,1)
 	#xs = xs0 #+ (np.random.uniform(-0.2,0.2,size=len(xs0))).reshape(-1,1)
 	ys0 = xs*0 + y0 
-	ys = ys0 + (0.05 * rng.standard_normal(size=len(xs0))).reshape(-1,1)
+	ys = ys0 + (0.02 * rng.standard_normal(size=len(xs0))).reshape(-1,1)
 	#ys = ys0 #+ (np.random.uniform(-0.2,0.2,size=len(xs0))).reshape(-1,1)
 
 	delta_xs = xs*0

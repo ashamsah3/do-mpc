@@ -56,7 +56,6 @@ def pred(mean_x, std_x, mean_y, std_y, conf, horz):
 
 def Var(q, mean, std, x):
 	dist = mean-x
-
 	var = norm.ppf(q,dist,std)
 	#tic = time.perf_counter()
 	cvar = (1/(1-q))*scipy.stats.norm.expect(lambda x: x, lb = var)
@@ -66,7 +65,32 @@ def Var(q, mean, std, x):
 
 	return var, cvar, dist
 
+def CVaR_map_mpc(beta, delta_x, delta_y, w, h, x, y, ox_c, oy_c):
+	i=0
+	x_space = np.arange(0, x, 1)
+	y_space = np.arange(0, y, 1)
+	ii=0
+	a=np.zeros((len(y_space),len(x_space)))
+	for c in x_space:
+		for r in y_space:
+			#tic = time.perf_counter()
+			var, cvar_x, dist_x = Var(1-beta,delta_x+ox_c,w, c)
+			var, cvar_y, dist_y = Var(1-beta,delta_y+oy_c,h, r)
+			#toc = time.perf_counter()
+			#print(f"Downloaded the tutorial in {toc - tic:0.4f} seconds")
+			#v_cvar.append(cvar)
+			#v_dist.append(dist)
+			#print(i)
+			#print(ii)
+			a[ii][i]=cvar_x+cvar_y
+			ii=ii+1
+		i=i+1
+		ii=0
 
+	flat_a = a[::-1]
+	flat_a = flat_a.flatten()
+
+	return flat_a, a
 
 
 

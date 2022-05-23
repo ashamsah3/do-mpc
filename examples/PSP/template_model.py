@@ -42,7 +42,7 @@ def template_model(obstacles, symvar_type='SX'):
     # States are the position and velocitiy of the two masses.
 
     # States struct (optimization variables):
-    _x = model.set_variable(var_type='_x', var_name='x', shape=(4,1))
+    _x = model.set_variable('_x', 'x', shape=(4,1))
 
     # Input struct (optimization variables):
     _u = model.set_variable(var_type='_u', var_name='u', shape=(2,1))
@@ -67,6 +67,7 @@ def template_model(obstacles, symvar_type='SX'):
     dyn_obs_ry = model.set_variable('_tvp', 'dyn_obs_ry2')
     stance = model.set_variable('_tvp', 'stance')
     D = model.set_variable('_tvp', 'D')
+    #CVAR_space = model.set_variable('_tvp', 'cvar_space', shape=(6,8))
     #heading = model.set_variable('_tvp', 'hea')
     
 
@@ -118,6 +119,8 @@ def template_model(obstacles, symvar_type='SX'):
 
     model.set_expression('heading',heading)
 
+   
+
     
     psp_safety = model.tvp['stance']*(fabs(model.x['x',3])-(fabs(model.u['u',1])*w)) 
     psp_safety = model.tvp['stance']*(fabs(model.x['x',3])-(fabs(model.u['u',1])*w)) 
@@ -144,18 +147,20 @@ def template_model(obstacles, symvar_type='SX'):
     h_xk1_n1 = []
     
     
-    gamma = 0.5
+    gamma = 0.7
     sensor_r = 1
 
     for obs in obstacles:
 
        #h_xk1= sqrt(((xk-obs['x']))**2+((yk-obs['y']))**2)-(obs['r']+0.2)#sqrt(((xk-obs['x']/obs['r']))**2+((yk-obs['y']/obs['r']))**2)-1 #((xk-obs['x'])**2+(yk-obs['y'])**2)-obs['r']*1.05 # np.sqrt(((xk-obs['y'])/obs['r'])**2 + ((yk-obs['y'])/obs['r'])**2)
        #h_xk2= sqrt(((xk-obs['x2']))**2+((yk-obs['y2']))**2)-(obs['r2']+0.2)#sqrt(((xk-obs['x2']/obs['r2']))**2+((yk-obs['y2']/obs['r2']))**2)-5 #((xk-obs['x'])**2+(yk-obs['y'])**2)-obs['r']*1.05 # np.sqrt(((xk-obs['y'])/obs['r'])**2 + ((yk-obs['y'])/obs['r'])**2)
+       '''
        h_xk1= sqrt(((xk-model.tvp['dyn_obs_x2'])/obs['r2'])**2 + ((yk-model.tvp['dyn_obs_y2'])/obs['r2'])**2)-1 #sqrt(((xk-obs['x']/obs['r']))**2+((yk-obs['y']/obs['r']))**2)-1 #((xk-obs['x'])**2+(yk-obs['y'])**2)-obs['r']*1.05 # np.sqrt(((xk-obs['y'])/obs['r'])**2 + ((yk-obs['y'])/obs['r'])**2)
        h_xk1_n= sqrt(((xk_n-model.tvp['dyn_obs_x2'])/obs['r2'])**2 + ((yk_n-(model.tvp['dyn_obs_y2']))/obs['r2'])**2)-1
        h_xk1_n_aug= sqrt(((xk_n-model.tvp['dyn_obs_x_pred2'])/(obs['r2']*model.tvp['dyn_obs_rx2']))**2 + ((yk_n-(model.tvp['dyn_obs_y_pred2']))/(obs['r2']*model.tvp['dyn_obs_ry2']))**2)-1
        h_xk1_min= fmin(h_xk1_n,h_xk1_n_aug)
        full_hxk1 = ((1-gamma)*h_xk1 - h_xk1_min)
+       '''
 
 
        h_xk3= sqrt(((xk-model.tvp['dyn_obs_x'])/obs['r2'])**2 + ((yk-model.tvp['dyn_obs_y'])/obs['r2'])**2)-1
@@ -163,8 +168,9 @@ def template_model(obstacles, symvar_type='SX'):
        h_xk3_n_aug= sqrt(((xk_n-model.tvp['dyn_obs_x_pred'])/(obs['r2']*model.tvp['dyn_obs_rx']))**2 + ((yk_n-(model.tvp['dyn_obs_y_pred']))/(obs['r2']*model.tvp['dyn_obs_ry']))**2)-1
        h_xk3_min= fmin(h_xk3_n,h_xk3_n_aug)
        full_hxk3 = ((1-gamma)*h_xk3 - h_xk3_min)
-       CBF = fmax(full_hxk1,full_hxk3)
-       obstacle_distance.extend([CBF])
+       
+      # CBF = fmax(full_hxk1,full_hxk3)
+       obstacle_distance.extend([full_hxk3])
 
        gamma_e = (1-gamma)*h_xk3
        hn_aug = h_xk3_n_aug
@@ -189,7 +195,7 @@ def template_model(obstacles, symvar_type='SX'):
     #else:
      # obstacle_distance.extend([-1000])
 
-
+    
     model.set_expression('gamma',gamma_e)
     model.set_expression('hn_aug',hn_aug)
     model.set_expression('hn',hn)
